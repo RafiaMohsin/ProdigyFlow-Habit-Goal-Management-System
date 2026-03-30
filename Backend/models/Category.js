@@ -18,6 +18,21 @@ class Category {
       `);
     return result.recordset[0];
   }
+  static async createWithSP(category) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('CategoryName', sql.VarChar, category.CategoryName)
+      .execute('sp_AddCategory');
+    return result;
+  }
+
+  static async deleteWithSP(categoryId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('CategoryID', sql.Int, categoryId)
+      .execute('sp_DeleteCategory');
+    return result;
+  }
 }
 
 module.exports = Category;

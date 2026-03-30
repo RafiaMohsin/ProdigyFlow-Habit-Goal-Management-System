@@ -21,6 +21,23 @@ class User {
       `);
     return result.recordset[0];
   }
+
+  static async getStats() {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT u.Username, COUNT(h.HabitID) AS TotalHabits
+      FROM Users u
+      LEFT JOIN Habits h ON u.UserID = h.UserID
+      GROUP BY u.Username;
+    `);
+    return result.recordset;
+  }
+
+  static async getStatsFromView() {
+    const pool = await poolPromise;
+    const result = await pool.request().query('SELECT * FROM vw_UserHabitStats');
+    return result.recordset;
+  }
 }
 
 module.exports = User;

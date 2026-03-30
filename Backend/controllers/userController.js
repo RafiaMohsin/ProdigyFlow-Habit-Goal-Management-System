@@ -21,3 +21,22 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getUserStats = async (req, res) => {
+  try {
+    const stats = await User.getStats();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getUserStatsView = async (req, res) => {
+  try {
+    const stats = await User.getStatsFromView();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
