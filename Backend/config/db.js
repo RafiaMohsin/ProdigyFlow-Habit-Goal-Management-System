@@ -1,4 +1,5 @@
 const sql = require('mssql');
+require('dotenv').config();
 
 const config = {
   user: process.env.DB_USER,
@@ -25,5 +26,6 @@ const poolPromise = new sql.ConnectionPool(config)
 
 module.exports = {
   sql,
+  config,
   poolPromise,
 };
