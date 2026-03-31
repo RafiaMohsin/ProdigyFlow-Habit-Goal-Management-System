@@ -427,6 +427,73 @@ JOIN HabitLogs L ON H.HabitID = L.HabitID
 WHERE S.CurrentStreak > 5 
   AND L.Status = 'Failed';
 
+-- HABIT TRACKING & GOAL MANAGEMENT BACKEND EXTENSIONS
+
+GO
+
+-- 1. VIEW: Unified Activity Timeline
+-- Combines Habit Logs and Habit Notes into a single chronological feed
+CREATE VIEW vw_HabitActivityTimeline AS
+SELECT 
+    HabitID, 
+    CompletionDate AS ActivityDate, 
+    'Log: ' + Status AS ActivityDetails 
+FROM HabitLogs
+UNION
+SELECT 
+    HabitID, 
+    CreatedDate, 
+    'Note: ' + CAST(NoteText AS VARCHAR(100)) 
+FROM HabitNotes;
+GO
+
+-- 2. VIEW: Goal Progress Composition
+-- Shows habits linked to specific goals for progress tracking
+CREATE VIEW vw_GoalProgressDetails AS
+SELECT 
+    G.GoalID,
+    G.GoalName,
+    G.Progress,
+    H.HabitName,
+    H.Difficulty
+FROM Goals G
+JOIN GoalHabit GH ON G.GoalID = GH.GoalID
+JOIN Habits H ON GH.HabitID = H.HabitID;
+GO
+
+-- 3. PROCEDURE: Log Habit Activity
+-- Safely inserts a log entry with the current timestamp
+CREATE PROCEDURE sp_LogHabitActivity
+    @HabitID INT,
+    @Status VARCHAR(20) -- Expected: 'Completed', 'Failed', 'Skipped', 'Pending'
+AS
+BEGIN
+    INSERT INTO HabitLogs (HabitID, Status, CompletionDate)
+    VALUES (@HabitID, @Status, GETDATE());
+END;
+GO
+
+-- 4. PROCEDURE: Sync and Reset Streaks
+-- Resets CurrentStreak to 0 if the habit was not updated today
+CREATE PROCEDURE sp_SyncExpiredStreaks
+AS
+BEGIN
+    UPDATE StreakHistory 
+    SET CurrentStreak = 0 
+    WHERE LastUpdated < CAST(GETDATE() AS DATE);
+END;
+GO
+
+-- 5. PROCEDURE: Delete Old Maintenance Logs
+-- Removes 'Pending' logs older than 7 days to keep database clean
+CREATE PROCEDURE sp_CleanupPendingLogs
+AS
+BEGIN
+    DELETE FROM HabitLogs 
+    WHERE Status = 'Pending' AND CompletionDate < (GETDATE() - 7);
+END;
+GO
+
 
   -- Eman Faisal 24L-2514
 
