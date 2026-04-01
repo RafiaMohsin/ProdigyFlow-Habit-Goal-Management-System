@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors'); // Added for frontend connectivity
 const app = express();
 
+const { connectDB } = require('./config/db');
+
 // 1. Import Routes 
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -17,6 +19,7 @@ const habitNoteRoutes = require('./routes/habitNoteRoutes');
 // --- Goal Management Layer ---
 const goalRoutes = require('./routes/goalRoutes');
 const goalHabitRoutes = require('./routes/goalHabitRoutes');
+
 
 // 2. Standard Middleware
 app.use(cors()); // Enable CORS
@@ -50,9 +53,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong on the server!' });
 });
 
+
+//analytics layer
+app.use('/performance', require('./routes/performanceRoutes'));
+
+//remainder and notification layer
+app.use('/notifications', require('./routes/notificationRoutes'));
+app.use('/reminders', require('./routes/reminderRoutes'));
+
+//achievement layer
+app.use('/achievements', require('./routes/achievementRoutes'));
+app.use('/user-achievements', require('./routes/userAchievementRoutes'));
+
+
 // Start Server
 const PORT = process.env.PORT || 3000; 
 app.listen(PORT, () => {
-  console.log(`🚀 ProdigyFlow Server running on port ${PORT}`);
+  console.log(`ProdigyFlow Server running on port ${PORT}`);
   console.log(`Check API status at http://localhost:${PORT}/`);
 });
