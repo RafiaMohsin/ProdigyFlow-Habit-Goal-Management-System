@@ -14,13 +14,31 @@ const config = {
     }
 };
 
-const connectDB = async () => {
-    try {
-        await sql.connect(config);
-        console.log("Connected to DB via Environment Variables");
-    } catch (err) {
-        console.error("DB Error:", err);
-    }
+const poolPromise = new sql.ConnectionPool(config)
+  .connect()
+  .then(pool => {
+    console.log('Connected to SQL Server successfully.');
+    return pool;
+  })
+  .catch(err => {
+    console.error('Database Connection Failed! Bad Config: ', err);
+    process.exit(1);
+  });
+
+module.exports = {
+  sql,
+  config,
+  poolPromise,
 };
 
-module.exports = { sql, connectDB };
+//use this module.exports for reminder, notification, achievement, analytic layer
+// const connectDB = async () => {
+//     try {
+//         await sql.connect(config);
+//         console.log("Connected to DB via Environment Variables");
+//     } catch (err) {
+//         console.error("DB Error:", err);
+//     }
+// };
+
+// module.exports = { sql, connectDB };
