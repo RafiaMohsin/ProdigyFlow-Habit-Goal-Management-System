@@ -689,3 +689,98 @@ WHERE S.CurrentStreak > (
     JOIN Habits HB ON SH.HabitID = HB.HabitID
     WHERE HB.CategoryID = H.CategoryID
 );
+
+--1. Stored Procedures (Automation)
+--auto award achievement
+GO
+CREATE PROCEDURE sp_AwardFirstBadge
+    @UserID INT
+AS
+BEGIN
+    -- Check if user already has the 'Habit Starter' badge (ID 1)
+    IF NOT EXISTS (SELECT 1 FROM UserAchievements WHERE UserID = @UserID AND AchievementID = 1)
+    BEGIN
+        INSERT INTO UserAchievements (UserID, AchievementID, EarnedDate)
+        VALUES (@UserID, 1, GETDATE());
+
+        -- Also create a notification for the user
+        INSERT INTO Notifications (UserID, Message, Status)
+        VALUES (@UserID, 'Congratulations, You earned the Habit Starter badge', 'Unread');
+    END
+END;
+GO
+--testing
+EXEC sp_AwardFirstBadge @UserID = 1;
+SELECT * FROM UserAchievements WHERE UserID = 1;
+
+
+--generate performance report
+GO
+CREATE PROCEDURE sp_GenerateWeeklyReport
+    @UserID INT,
+    @Rate DECIMAL(5,2),
+    @Score DECIMAL(5,2)
+AS
+BEGIN
+    INSERT INTO PerformanceReport (UserID, ReportType, CompletionRate, ConsistencyScore)
+    VALUES (@UserID, 'Weekly', @Rate, @Score);
+END;
+GO
+--testing
+EXEC sp_GenerateWeeklyReport @UserID = 1, @Rate = 92.50, @Score = 8.5;
+
+SELECT TOP 1 * FROM PerformanceReport 
+WHERE UserID = 1 
+ORDER BY GeneratedDate DESC;
+
+
+
+--2. Views (Data Visualization Readiness)
+--user achievement gallery
+GO
+CREATE VIEW vw_UserBadgeGallery AS
+SELECT 
+    U.Username,
+    A.Title AS BadgeName,
+    A.Description,
+    UA.EarnedDate
+FROM Users U
+JOIN UserAchievements UA ON U.UserID = UA.UserID
+JOIN Achievements A ON UA.AchievementID = A.AchievementID;
+GO
+--testing
+SELECT * FROM vw_UserBadgeGallery;
+
+
+--active reminders overview
+GO
+CREATE VIEW vw_DailyReminderSchedule AS
+SELECT 
+    H.HabitName,
+    R.ReminderTime,
+    R.Frequency,
+    U.Username
+FROM Reminders R
+JOIN Habits H ON R.HabitID = H.HabitID
+JOIN Users U ON H.UserID = U.UserID
+WHERE R.Status = 'Active';
+GO
+--testing
+SELECT * FROM vw_DailyReminderSchedule;
+
+
+--3. Complex Analytical Queries
+--find top performers
+SELECT UserID, AVG(ConsistencyScore) as AvgScore
+FROM PerformanceReport
+GROUP BY UserID
+HAVING AVG(ConsistencyScore) > (SELECT AVG(ConsistencyScore) FROM PerformanceReport);
+
+--unearned achievements
+SELECT Title FROM Achievements
+EXCEPT
+SELECT A.Title 
+FROM Achievements A
+JOIN UserAchievements UA ON A.AchievementID = UA.AchievementID
+WHERE UA.UserID = 1; -- Replace with specific UserID
+
