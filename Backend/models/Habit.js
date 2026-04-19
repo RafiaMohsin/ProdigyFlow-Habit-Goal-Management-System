@@ -11,8 +11,8 @@ class Habit {
     const pool = await poolPromise;
     const result = await pool.request()
       .input('HabitName', sql.VarChar, habit.HabitName)
-      .input('Difficulty', sql.VarChar, habit.Difficulty)
-      .input('Priority', sql.VarChar, habit.Priority)
+      .input('Difficulty', sql.Int, habit.Difficulty)
+      .input('Priority', sql.Int, habit.Priority)
       .input('UserID', sql.Int, habit.UserID)
       .input('CategoryID', sql.Int, habit.CategoryID)
       .query(`
