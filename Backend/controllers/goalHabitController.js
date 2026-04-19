@@ -17,13 +17,24 @@ module.exports = {
         }
     },
 
-    // 2. Get all habits for a goal using the vw_GoalProgressDetails View
     getGoalComposition: async (req, res) => {
         try {
             const { goalId } = req.params;
-            const habits = await GoalHabit.getHabitsByGoal(goalId);
             
-            res.status(200).json(habits);
+            // Bypass the view entirely because it does not include GoalHabitID
+            const sql = require('mssql');
+            const { config } = require('../config/db');
+            let pool = await sql.connect(config);
+            let result = await pool.request()
+                .input('GoalID', sql.Int, goalId)
+                .query(`
+                    SELECT gh.GoalHabitID, h.HabitID, h.HabitName, h.Difficulty
+                    FROM GoalHabit gh
+                    JOIN Habits h ON gh.HabitID = h.HabitID
+                    WHERE gh.GoalID = @GoalID
+                `);
+            
+            res.status(200).json(result.recordset);
         } catch (err) { 
             res.status(500).json({ error: err.message }); 
         }
