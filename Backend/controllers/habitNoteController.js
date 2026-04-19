@@ -11,11 +11,30 @@ module.exports = {
         }
     },
 
-    // Uses vw_HabitActivityTimeline
     getTimeline: async (req, res) => {
         try {
             const timeline = await HabitNote.getFullActivityHistory(req.params.habitId);
-            res.json(timeline);
+            
+            // Fetch raw notes to get NoteIDs which might be missing from the view
+            const sql = require('mssql');
+            const { config } = require('../config/db');
+            let pool = await sql.connect(config);
+            let rawNotesResult = await pool.request()
+                .input('HabitID', sql.Int, req.params.habitId)
+                .query('SELECT NoteID, NoteText FROM HabitNotes WHERE HabitID = @HabitID');
+            
+            const enrichedTimeline = timeline.map(item => {
+                if (item.ActivityDetails && item.ActivityDetails.startsWith('Note: ')) {
+                    const actualText = item.ActivityDetails.substring(6);
+                    const matchedNote = rawNotesResult.recordset.find(rn => rn.NoteText === actualText);
+                    if (matchedNote) {
+                        return { ...item, NoteID: matchedNote.NoteID };
+                    }
+                }
+                return item;
+            });
+            
+            res.json(enrichedTimeline);
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
