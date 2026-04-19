@@ -1,95 +1,74 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import Users from './components/Users';
 import AddUser from './components/AddUser';
 import Roles from './components/Roles';
 import Habits from './components/Habits';
 import AddHabit from './components/AddHabit';
-import Login from './components/Login';
+import Goals from './components/Goals';
+import GoalHabits from './components/GoalHabits';
+import HabitLogs from './components/HabitLogs';
+import HabitNotes from './components/HabitNotes';
+import StreakHistory from './components/StreakHistory';
 import './App.css';
 
-function App() {
+function Home() {
   const [userRefresh, setUserRefresh] = useState(0);
   const [habitRefresh, setHabitRefresh] = useState(0);
-  
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('prodigy_user');
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-      setIsLoggedIn(true);
-    }
-  }, []);
-
-  const handleLoginSuccess = (user) => {
-    setCurrentUser(user);
-    setIsLoggedIn(true);
-    localStorage.setItem('prodigy_user', JSON.stringify(user));
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setIsLoggedIn(false);
-    localStorage.removeItem('prodigy_user');
-  };
 
   const handleUserAdded = () => setUserRefresh(prev => prev + 1);
   const handleHabitAdded = () => setHabitRefresh(prev => prev + 1);
 
-  if (!isLoggedIn) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
+  return (
+    <div>
+      <section>
+        <h2>Users Management</h2>
+        <AddUser onUserAdded={handleUserAdded} />
+        <Users refreshTrigger={userRefresh} />
+      </section>
 
-  const isAdmin = currentUser.RoleID === 1;
+      <hr />
 
+      <section>
+        <h2>Roles</h2>
+        <Roles />
+      </section>
+
+      <hr />
+
+      <section>
+        <h2>Habits Management</h2>
+        <AddHabit onHabitAdded={handleHabitAdded} />
+        <Habits refreshTrigger={habitRefresh} />
+      </section>
+    </div>
+  );
+}
+
+function App() {
   return (
     <div className="App">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <h1>ProdigyFlow</h1>
-        <div className="user-info">
-          <span>Logged in as: <strong>{currentUser.Username}</strong> ({isAdmin ? 'Overseer' : 'Participant'})</span>
-          <button onClick={handleLogout} style={{ marginLeft: '15px', padding: '5px 12px', backgroundColor: '#ef4444' }}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <h1>ProdigyFlow Management System</h1>
       
-      {/* OVERSEER VIEW: Read-Only System Status */}
-      {isAdmin && (
-        <>
-          <section>
-            <h2>System Users</h2>
-            {/* Admin can ONLY view the list, not add new users */}
-            <Users refreshTrigger={userRefresh} />
-          </section>
+      <nav className="navbar">
+        <Link to="/">Dashboard</Link> |{' '}
+        <Link to="/goals">Goals</Link> |{' '}
+        <Link to="/goal-habits">Goal Habits</Link> |{' '}
+        <Link to="/logs">Habit Logs</Link> |{' '}
+        <Link to="/notes">Habit Notes</Link> |{' '}
+        <Link to="/streaks">Streak History</Link>
+      </nav>
 
-          <section>
-            <h2>System Roles</h2>
-            <Roles />
-          </section>
-
-          <section>
-            <h2>Global Habit Overview</h2>
-            <Habits refreshTrigger={habitRefresh} />
-          </section>
-        </>
-      )}
-
-      {/* PARTICIPANT VIEW: Managing Personal Habits */}
-      {!isAdmin && (
-        <section>
-          <h2>My Productivity</h2>
-          <AddHabit 
-            onHabitAdded={handleHabitAdded} 
-            fixedUserID={currentUser.UserID} 
-          />
-          <Habits 
-            refreshTrigger={habitRefresh} 
-            filterByUserID={currentUser.UserID} 
-          />
-        </section>
-      )}
+      <div className="content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/goal-habits" element={<GoalHabits />} />
+          <Route path="/logs" element={<HabitLogs />} />
+          <Route path="/notes" element={<HabitNotes />} />
+          <Route path="/streaks" element={<StreakHistory />} />
+        </Routes>
+      </div>
     </div>
   );
 }
