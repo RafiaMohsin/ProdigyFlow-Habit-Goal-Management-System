@@ -29,6 +29,7 @@ class Habit {
       SELECT 
           h.HabitID,
           h.HabitName,
+          h.UserID,
           u.Username,
           c.CategoryName,
           h.Priority,

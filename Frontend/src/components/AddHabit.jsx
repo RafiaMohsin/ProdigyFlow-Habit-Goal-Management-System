@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 
-const AddHabit = ({ onHabitAdded }) => {
+const AddHabit = ({ onHabitAdded, fixedUserID }) => {
   const [formData, setFormData] = useState({
     HabitName: '',
     Difficulty: 1,
     Priority: 1,
-    UserID: '',
+    UserID: fixedUserID || '',
     CategoryID: ''
   });
   const [users, setUsers] = useState([]);
@@ -14,18 +14,19 @@ const AddHabit = ({ onHabitAdded }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch users
-    fetch(`${API_BASE_URL}/users`)
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => console.error('Error fetching users:', err));
+    // Only fetch users if we aren't restricted to a fixed one
+    if (!fixedUserID) {
+      fetch(`${API_BASE_URL}/users`)
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(err => console.error('Error fetching users:', err));
+    }
 
-    // Fetch categories
     fetch(`${API_BASE_URL}/categories`)
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error('Error fetching categories:', err));
-  }, []);
+  }, [fixedUserID]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,8 +34,10 @@ const AddHabit = ({ onHabitAdded }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.UserID || !formData.CategoryID) {
-      setError('Please select a user and category.');
+    const finalUserID = fixedUserID || formData.UserID;
+    
+    if (!finalUserID || !formData.CategoryID) {
+      setError('Please select a category.');
       return;
     }
     setError(null);
@@ -44,21 +47,19 @@ const AddHabit = ({ onHabitAdded }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...formData,
+        UserID: parseInt(finalUserID),
         Difficulty: parseInt(formData.Difficulty),
         Priority: parseInt(formData.Priority),
-        UserID: parseInt(formData.UserID),
         CategoryID: parseInt(formData.CategoryID)
       })
     })
       .then(async response => {
         const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to add habit');
-        }
+        if (!response.ok) throw new Error(data.error || 'Failed to add habit');
         return data;
       })
       .then(() => {
-        setFormData({ HabitName: '', Difficulty: 1, Priority: 1, UserID: '', CategoryID: '' });
+        setFormData({ HabitName: '', Difficulty: 1, Priority: 1, UserID: fixedUserID || '', CategoryID: '' });
         onHabitAdded();
       })
       .catch(err => setError(err.message));
@@ -80,12 +81,19 @@ const AddHabit = ({ onHabitAdded }) => {
           <input name="Priority" type="number" min="1" max="5" value={formData.Priority} onChange={handleChange} required />
         </div>
 
-        <select name="UserID" value={formData.UserID} onChange={handleChange} required>
-          <option value="">Select User</option>
-          {users.map(u => (
-            <option key={u.UserID} value={u.UserID}>{u.Username}</option>
-          ))}
-        </select>
+        {/* Hide user selection if fixedUserID is provided (Regular User) */}
+        {!fixedUserID ? (
+          <select name="UserID" value={formData.UserID} onChange={handleChange} required>
+            <option value="">Select User</option>
+            {users.map(u => (
+              <option key={u.UserID} value={u.UserID}>{u.Username}</option>
+            ))}
+          </select>
+        ) : (
+          <div className="form-group">
+            <span style={{ fontSize: '14px', color: '#64748b' }}>Logging for your account</span>
+          </div>
+        )}
 
         <select name="CategoryID" value={formData.CategoryID} onChange={handleChange} required>
           <option value="">Select Category</option>

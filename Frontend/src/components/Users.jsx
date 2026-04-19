@@ -27,19 +27,18 @@ const Users = ({ refreshTrigger }) => {
   if (error) return (
     <div className="error-box">
       <p style={{ color: 'red' }}>Error: {error}</p>
-      <small>Check if your backend is running at {API_BASE_URL}</small>
     </div>
   );
 
   return (
     <div>
-      <h3>User List</h3>
+      <h3>System User Status</h3>
       <table>
         <thead>
           <tr>
             <th>Username</th>
             <th>Email</th>
-            <th>Role ID</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -47,7 +46,18 @@ const Users = ({ refreshTrigger }) => {
             <tr key={user.UserID || index}>
               <td>{user.Username}</td>
               <td>{user.Email}</td>
-              <td>{user.RoleID}</td>
+              <td>
+                <span style={{ 
+                  padding: '4px 8px', 
+                  borderRadius: '12px', 
+                  fontSize: '12px', 
+                  fontWeight: 'bold',
+                  backgroundColor: user.RoleID === 1 ? '#fee2e2' : '#dcfce7',
+                  color: user.RoleID === 1 ? '#991b1b' : '#166534'
+                }}>
+                  {user.RoleID === 1 ? 'Admin' : 'User'}
+                </span>
+              </td>
             </tr>
           )) : (
             <tr><td colSpan="3" style={{ textAlign: 'center' }}>No users found.</td></tr>
