@@ -10,8 +10,11 @@ class PerformanceReport {
                 .input('ReportType', sql.VarChar(50), data.reportType)
                 .input('CompletionRate', sql.Decimal(5, 2), data.completionRate)
                 .input('ConsistencyScore', sql.Decimal(5, 2), data.consistencyScore)
-                .query(`INSERT INTO PerformanceReport (UserID, ReportType, CompletionRate, ConsistencyScore) 
-                        VALUES (@UserID, @ReportType, @CompletionRate, @ConsistencyScore)`);
+                .query(`
+                        DECLARE @NextID INT = ISNULL((SELECT MAX(ReportID) FROM PerformanceReport), 0) + 1;
+                        INSERT INTO PerformanceReport (ReportID, UserID, ReportType, CompletionRate, ConsistencyScore) 
+                        VALUES (@NextID, @UserID, @ReportType, @CompletionRate, @ConsistencyScore)
+                    `);
         } catch (err) { throw err; }
     }
 
