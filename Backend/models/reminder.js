@@ -6,17 +6,16 @@ class Reminder {
     try {
         let pool = await sql.connect(config);
         
-        const timeParts = data.reminderTime.split(':');
-        const timeObject = new Date();
-        timeObject.setHours(timeParts[0], timeParts[1], timeParts[2] || 0, 0);
-
         return await pool.request()
             .input('HabitID', sql.Int, data.habitId)
-            .input('ReminderTime', sql.Time, timeObject) 
+            .input('ReminderTime', sql.VarChar(8), data.reminderTime) 
             .input('Frequency', sql.VarChar(50), data.frequency)
             .input('Status', sql.VarChar(20), 'Active')
-            .query(`INSERT INTO Reminders (HabitID, ReminderTime, Frequency, Status) 
-                    VALUES (@HabitID, @ReminderTime, @Frequency, @Status)`);
+            .query(`
+                    DECLARE @NextID INT = ISNULL((SELECT MAX(ReminderID) FROM Reminders), 0) + 1;
+                    INSERT INTO Reminders (ReminderID, HabitID, ReminderTime, Frequency, Status) 
+                    VALUES (@NextID, @HabitID, @ReminderTime, @Frequency, @Status)
+                `);
     } catch (err) { throw err; }
 }
 
