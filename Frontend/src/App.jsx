@@ -10,6 +10,11 @@ import GoalHabits from './components/GoalHabits';
 import HabitLogs from './components/HabitLogs';
 import HabitNotes from './components/HabitNotes';
 import StreakHistory from './components/StreakHistory';
+import Performance from './components/Performance';
+import Reminders from './components/Reminders';
+import Achievements from './components/Achievements';
+import UserAchievements from './components/UserAchievements';
+import Notifications from './components/Notifications';
 import './App.css';
 
 function Home() {
@@ -57,6 +62,11 @@ function App() {
         <Link to="/logs">Habit Logs</Link> |{' '}
         <Link to="/notes">Habit Notes</Link> |{' '}
         <Link to="/streaks">Streak History</Link>
+        <Link to="/performance">Performance</Link> |{' '}
+        <Link to="/reminders">Reminders</Link> |{' '}
+        <Link to="/achievements">Achievements</Link> |{' '}
+        <Link to="/user-achievements">User Achievements</Link> |{' '}
+        <Link to="/notifications">Notifications</Link>
       </nav>
 
       <div className="content">
@@ -67,6 +77,11 @@ function App() {
           <Route path="/logs" element={<HabitLogs />} />
           <Route path="/notes" element={<HabitNotes />} />
           <Route path="/streaks" element={<StreakHistory />} />
+          <Route path="/performance" element={<Performance />} />
+          <Route path="/reminders" element={<Reminders />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/user-achievements" element={<UserAchievements />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </div>
     </div>
