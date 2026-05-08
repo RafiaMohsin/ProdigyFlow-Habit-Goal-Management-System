@@ -20,13 +20,21 @@ CREATE TABLE Users (
 	RoleID INT NOT NULL,
 	FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
 );
+-- To avoid unnecessary complexity, we are not making Composite PK (UserID,Username, Email)
+-- but we have mentioned it in our handwritten normalized schema
 GO
 CREATE TABLE Categories (
 	CategoryID INT IDENTITY(1,1) PRIMARY KEY,
 	CategoryName VARCHAR(255) NOT NULL
 );
 GO
+-----Added for Normalized Schema
+ALTER TABLE Roles
+ADD CONSTRAINT UQ_RoleName UNIQUE(RoleName);
 
+ALTER TABLE Categories
+ADD CONSTRAINT UQ_CategoryName UNIQUE(CategoryName);
+------...................
 CREATE TABLE Habits (
 	HabitID INT IDENTITY(1,1) PRIMARY KEY,
 	HabitName VARCHAR(255) NOT NULL,
@@ -224,10 +232,10 @@ GO
 CREATE TABLE HabitNotes (
     NoteID INT IDENTITY(1,1) PRIMARY KEY,
     HabitID INT NOT NULL,
-    UserID INT NOT NULL,
+    -- UserID INT NOT NULL, we are removing this to avoid Transitive dependency.
     NoteText TEXT NOT NULL,
     CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    -- FOREIGN KEY (UserID) REFERENCES Users(UserID),
     FOREIGN KEY (HabitID) REFERENCES Habits(HabitID)
 );
 GO
@@ -540,10 +548,22 @@ CREATE TABLE Reminders(
 ReminderID INT IDENTITY(1,1) PRIMARY KEY,
 HabitID INT NOT NULL,
 ReminderTime TIME NOT NULL, 
-Frequency VARCHAR(50) NOT NULL,
 Status VARCHAR(20) NOT NULL CHECK (Status IN ('Active', 'Inactive'))
+FrequencyID INT NOT NULL,
+FOREIGN KEY (FrequencyID)
+REFERENCES ReminderFrequency(FrequencyID)
 );
 GO
+CREATE TABLE ReminderFrequency (
+    FrequencyID INT IDENTITY(1,1) PRIMARY KEY,
+    FrequencyName VARCHAR(50) NOT NULL UNIQUE
+);
+GO
+INSERT INTO ReminderFrequency (FrequencyName)
+VALUES
+('Daily'),
+('Weekly'),
+('Mon-Fri');
 INSERT INTO PerformanceReport (UserID, ReportType, CompletionRate, ConsistencyScore)
 VALUES
 (1, 'Weekly', 85.50, 7.2),
