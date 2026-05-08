@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const ROOT_URL = 'http://localhost:3000';
+import { API_BASE_URL } from '../config';
 
 const Achievements = () => {
     const [allAchievements, setAllAchievements] = useState([]);
@@ -11,7 +11,9 @@ const Achievements = () => {
 
     const fetchAllAchievements = async () => {
         try {
-            const res = await fetch(`${ROOT_URL}/achievements/all`);
+            const res = await fetch(`${API_BASE_URL}/achievements/all`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
             const data = await res.json();
             setAllAchievements(Array.isArray(data) ? data : []);
         } catch (err) {

@@ -8,9 +8,13 @@ const Users = ({ refreshTrigger }) => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_BASE_URL}/users`)
+    fetch(`${API_BASE_URL}/users`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
       .then(response => {
-        if (!response.ok) throw new Error('API unreachable. Is the backend running?');
+        if (!response.ok) throw new Error('Unauthorized or API error');
         return response.json();
       })
       .then(data => {

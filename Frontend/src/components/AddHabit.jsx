@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 
-const AddHabit = ({ onHabitAdded, fixedUserID }) => {
+function AddHabit({ onHabitAdded }) {
+  const [roleId] = useState(parseInt(localStorage.getItem('roleId')));
   const [formData, setFormData] = useState({
     HabitName: '',
     Difficulty: 1,
     Priority: 1,
-    UserID: fixedUserID || '',
+    UserID: '',
     CategoryID: ''
   });
   const [users, setUsers] = useState([]);
@@ -14,19 +15,23 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Only fetch users if we aren't restricted to a fixed one
-    if (!fixedUserID) {
-      fetch(`${API_BASE_URL}/users`)
+    // Only fetch users if user is Admin
+    if (roleId === 1) {
+      fetch(`${API_BASE_URL}/users`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
         .then(res => res.json())
         .then(data => setUsers(data))
         .catch(err => console.error('Error fetching users:', err));
     }
 
-    fetch(`${API_BASE_URL}/categories`)
+    fetch(`${API_BASE_URL}/categories`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error('Error fetching categories:', err));
-  }, [fixedUserID]);
+  }, [roleId]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,9 +39,12 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const finalUserID = fixedUserID || formData.UserID;
     
-    if (!finalUserID || !formData.CategoryID) {
+    if (roleId === 1 && !formData.UserID) {
+      setError('Please select a user.');
+      return;
+    }
+    if (!formData.CategoryID) {
       setError('Please select a category.');
       return;
     }
@@ -44,10 +52,13 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
 
     fetch(`${API_BASE_URL}/habits`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
       body: JSON.stringify({
         ...formData,
-        UserID: parseInt(finalUserID),
+        UserID: roleId === 1 ? parseInt(formData.UserID) : undefined, // Backend will use token ID if undefined
         Difficulty: parseInt(formData.Difficulty),
         Priority: parseInt(formData.Priority),
         CategoryID: parseInt(formData.CategoryID)
@@ -59,7 +70,7 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
         return data;
       })
       .then(() => {
-        setFormData({ HabitName: '', Difficulty: 1, Priority: 1, UserID: fixedUserID || '', CategoryID: '' });
+        setFormData({ HabitName: '', Difficulty: 1, Priority: 1, UserID: '', CategoryID: '' });
         onHabitAdded();
       })
       .catch(err => setError(err.message));
@@ -81,18 +92,13 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
           <input name="Priority" type="number" min="1" max="5" value={formData.Priority} onChange={handleChange} required />
         </div>
 
-        {/* Hide user selection if fixedUserID is provided (Regular User) */}
-        {!fixedUserID ? (
+        {roleId === 1 && (
           <select name="UserID" value={formData.UserID} onChange={handleChange} required>
             <option value="">Select User</option>
             {users.map(u => (
               <option key={u.UserID} value={u.UserID}>{u.Username}</option>
             ))}
           </select>
-        ) : (
-          <div className="form-group">
-            <span style={{ fontSize: '14px', color: '#64748b' }}>Logging for your account</span>
-          </div>
         )}
 
         <select name="CategoryID" value={formData.CategoryID} onChange={handleChange} required>
@@ -107,6 +113,6 @@ const AddHabit = ({ onHabitAdded, fixedUserID }) => {
       {error && <p className="error">{error}</p>}
     </div>
   );
-};
+}
 
 export default AddHabit;

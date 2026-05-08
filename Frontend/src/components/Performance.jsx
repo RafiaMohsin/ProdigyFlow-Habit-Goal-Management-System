@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-
-const ROOT_URL = 'http://localhost:3000';
+import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 
 const Performance = () => {
     const [userIdForList, setUserIdForList] = useState('');
@@ -14,7 +13,9 @@ const Performance = () => {
     const fetchReports = async () => {
         if (!userIdForList) return;
         try {
-            const res = await fetch(`${ROOT_URL}/performance/${userIdForList}`);
+            const res = await fetch(`${API_BASE_URL}/performance/${userIdForList}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
             const data = await res.json();
             setReports(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -25,9 +26,12 @@ const Performance = () => {
     const addReport = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${ROOT_URL}/performance`, {
+            const res = await fetch(`${API_BASE_URL}/performance`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
                 body: JSON.stringify({ userId, reportType, completionRate, consistencyScore })
             });
             if (res.ok) {

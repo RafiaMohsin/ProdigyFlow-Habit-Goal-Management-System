@@ -7,6 +7,14 @@ class Habit {
     return result.recordset;
   }
 
+  static async getByUserId(userId) {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('UserID', sql.Int, userId)
+      .query('SELECT * FROM Habits WHERE UserID = @UserID');
+    return result.recordset;
+  }
+
   static async create(habit) {
     const pool = await poolPromise;
     const result = await pool.request()

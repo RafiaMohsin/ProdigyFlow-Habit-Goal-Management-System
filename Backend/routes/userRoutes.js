@@ -8,10 +8,7 @@ router.get('/', userController.getAllUsers);
 // POST create user
 router.post('/', userController.createUser);
 
-// GET user stats
-router.get('/stats', userController.getUserStats);
-
-// GET user stats from view
-router.get('/stats-view', userController.getUserStatsView);
+// GET dashboard stats (real-time counts)
+router.get('/dashboard-stats', userController.getDashboardStats);
 
 module.exports = router;

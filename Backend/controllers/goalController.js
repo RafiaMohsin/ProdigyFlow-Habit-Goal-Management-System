@@ -12,10 +12,12 @@ module.exports = {
         }
     },
 
-    // 2. Fetch all goals for a specific user
+    // 2. Fetch all goals for the logged-in user
     getUserGoals: async (req, res) => {
         try {
-            const goals = await Goal.getByUserId(req.params.userId);
+            // Favor logged-in user ID, but allow admin to specify another ID
+            const userId = (req.user.roleId === 1 && req.params.userId) ? req.params.userId : req.user.id;
+            const goals = await Goal.getByUserId(userId);
             res.status(200).json(goals);
         } catch (err) { 
             res.status(500).json({ error: err.message }); 
@@ -44,10 +46,11 @@ module.exports = {
             res.json({ message: "Goal deleted" });
         } catch (err) { res.status(500).json({ error: err.message }); }
     },
-    // 4. Get urgent goals (due within 7 days)
+    // 4. Get urgent goals for the logged-in user
     getUrgent: async (req, res) => {
         try {
-            const goals = await Goal.getUrgentGoals(req.params.userId);
+            const userId = (req.user.roleId === 1 && req.params.userId) ? req.params.userId : req.user.id;
+            const goals = await Goal.getUrgentGoals(userId);
             res.status(200).json(goals);
         } catch (err) { 
             res.status(500).json({ error: err.message }); 

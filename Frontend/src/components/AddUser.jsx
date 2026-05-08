@@ -12,7 +12,9 @@ const AddUser = ({ onUserAdded }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/roles`)
+    fetch(`${API_BASE_URL}/roles`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
       .then(res => res.json())
       .then(data => setRoles(data))
       .catch(err => console.error('Error fetching roles:', err));
@@ -32,7 +34,10 @@ const AddUser = ({ onUserAdded }) => {
 
     fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
       body: JSON.stringify({
         ...formData,
         RoleID: parseInt(formData.RoleID)

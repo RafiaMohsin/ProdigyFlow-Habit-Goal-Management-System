@@ -1,25 +1,40 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from '../config';
 
-const Login = ({ setToken, navigateTo }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+const SignUp = ({ setToken, navigateTo }) => {
+  const [formData, setFormData] = useState({
+    Username: '',
+    Email: '',
+    Password: '',
+    ConfirmPassword: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.Password !== formData.ConfirmPassword) {
+      return setError('Passwords do not match');
+    }
+    
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ Email: email, Password: password }),
+        body: JSON.stringify({
+          Username: formData.Username,
+          Email: formData.Email,
+          Password: formData.Password
+        }),
       });
 
       const data = await response.json();
@@ -32,13 +47,13 @@ const Login = ({ setToken, navigateTo }) => {
           localStorage.setItem('username', data.user.username);
           setToken(data.token);
         } else {
-          setError('Invalid server response. Please try again.');
+          setError('Registration successful, but login failed. Please log in manually.');
+          setTimeout(() => navigateTo('login'), 2000);
         }
       } else {
-        setError(data.error || 'Login failed. Please check your credentials.');
+        setError(data.error || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      console.error('Login error:', err);
       setError('An error occurred. Please try again later.');
     } finally {
       setLoading(false);
@@ -50,63 +65,72 @@ const Login = ({ setToken, navigateTo }) => {
       <div className="login-card">
         <div className="login-header">
           <div className="app-logo">ProdigyFlow</div>
-          <h2>Welcome Back</h2>
-          <p>Sign in to manage your productivity</p>
+          <h2>Create Account</h2>
+          <p>Join ProdigyFlow to track your goals</p>
         </div>
         
         {error && <div className="error-message">{error}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="Username">Username</label>
+            <input
+              type="text"
+              id="Username"
+              name="Username"
+              placeholder="johndoe"
+              value={formData.Username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="Email">Email Address</label>
             <input
               type="email"
-              id="email"
+              id="Email"
+              name="Email"
               placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.Email}
+              onChange={handleChange}
               required
             />
           </div>
           
           <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="password-input-wrapper">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button 
-                type="button" 
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.822 7.822L21 21m-6.422-6.422a3.75 3.75 0 11-5.25-5.25m5.25 5.25l-3.5-3.5" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                )}
-              </button>
-            </div>
+            <label htmlFor="Password">Password</label>
+            <input
+              type="password"
+              id="Password"
+              name="Password"
+              placeholder="••••••••"
+              value={formData.Password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="ConfirmPassword">Confirm Password</label>
+            <input
+              type="password"
+              id="ConfirmPassword"
+              name="ConfirmPassword"
+              placeholder="••••••••"
+              value={formData.ConfirmPassword}
+              onChange={handleChange}
+              required
+            />
           </div>
           
           <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
         <p style={{ marginTop: '20px', fontSize: '14px', textAlign: 'center' }}>
-          Don't have an account? <button onClick={() => navigateTo('signup')} style={{ background: 'none', border: 'none', color: '#4299e1', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}>Sign Up</button>
+          Already have an account? <button onClick={() => navigateTo('login')} style={{ background: 'none', border: 'none', color: '#4299e1', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}>Log In</button>
         </p>
       </div>
       
@@ -168,6 +192,7 @@ const Login = ({ setToken, navigateTo }) => {
         
         .form-group {
           margin-bottom: 20px;
+          text-align: left;
         }
         
         label {
@@ -196,22 +221,6 @@ const Login = ({ setToken, navigateTo }) => {
           box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
         }
 
-        .password-input-wrapper {
-          position: relative;
-        }
-
-        .toggle-password {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          color: #a0aec0;
-          cursor: pointer;
-          display: flex;
-        }
-        
         .submit-btn {
           width: 100%;
           padding: 14px;
@@ -238,4 +247,4 @@ const Login = ({ setToken, navigateTo }) => {
   );
 };
 
-export default Login;
+export default SignUp;

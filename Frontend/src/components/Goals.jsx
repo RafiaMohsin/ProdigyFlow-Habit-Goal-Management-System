@@ -4,16 +4,18 @@ import { API_BASE_URL } from '../config';
 function Goals() {
   const [goals, setGoals] = useState([]);
   const [urgentGoals, setUrgentGoals] = useState([]);
-  const [userId, setUserId] = useState('1'); // Defaulting to 1 for demo
+  const [roleId] = useState(parseInt(localStorage.getItem('roleId')));
+  const [userId, setUserId] = useState(localStorage.getItem('userId') || '1');
   const [goalName, setGoalName] = useState('');
   const [targetDate, setTargetDate] = useState('');
   const [loading, setLoading] = useState(false);
 
   const fetchGoals = async () => {
-    if (!userId) return;
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/goals/user/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/goals/user/${userId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       if (response.ok) {
         const data = await response.json();
         setGoals(data);
@@ -26,9 +28,10 @@ function Goals() {
   };
 
   const fetchUrgentGoals = async () => {
-    if (!userId) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/goals/urgent/${userId}`);
+      const response = await fetch(`${API_BASE_URL}/goals/urgent/${userId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
       if (response.ok) {
         const data = await response.json();
         setUrgentGoals(data);
@@ -48,7 +51,10 @@ function Goals() {
     try {
       const response = await fetch(`${API_BASE_URL}/goals`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({ userId, goalName, targetDate })
       });
       if (response.ok) {
@@ -69,7 +75,10 @@ function Goals() {
       try {
         const response = await fetch(`${API_BASE_URL}/goals/progress`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
           body: JSON.stringify({ goalId, progress: parseInt(newProgress) })
         });
         if (response.ok) {
@@ -86,7 +95,8 @@ function Goals() {
     if (window.confirm('Are you sure you want to delete this goal?')) {
       try {
         const response = await fetch(`${API_BASE_URL}/goals/${goalId}/${userId}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (response.ok) {
           fetchGoals();
@@ -102,17 +112,18 @@ function Goals() {
     <div className="component-container">
       <h2>Goals Management</h2>
       
-      <div className="control-group">
-        <label>View Goals for User ID: </label>
-        <input 
-          type="number" 
-          value={userId} 
-          onChange={(e) => setUserId(e.target.value)} 
-          placeholder="Enter User ID"
-        />
-      </div>
-
-      <hr />
+      {roleId === 1 && (
+        <div className="control-group">
+          <label>View Goals for User ID: </label>
+          <input 
+            type="number" 
+            value={userId} 
+            onChange={(e) => setUserId(e.target.value)} 
+            placeholder="Enter User ID"
+          />
+          <hr />
+        </div>
+      )}
 
       <form onSubmit={handleCreateGoal} className="add-form">
         <h3>Create New Goal</h3>
@@ -134,7 +145,7 @@ function Goals() {
 
       <hr />
 
-      <h3>User Goals</h3>
+      <h3>{roleId === 1 ? `Goals for User ${userId}` : 'My Personal Goals'}</h3>
       {loading ? <p>Loading goals...</p> : (
         <ul className="item-list">
           {goals.map(goal => (
@@ -146,7 +157,7 @@ function Goals() {
               </div>
             </li>
           ))}
-          {goals.length === 0 && <p>No goals found for this user.</p>}
+          {goals.length === 0 && <p>No goals found.</p>}
         </ul>
       )}
 

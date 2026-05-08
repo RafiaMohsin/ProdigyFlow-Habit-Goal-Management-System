@@ -7,7 +7,11 @@ const Roles = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/roles`)
+    fetch(`${API_BASE_URL}/roles`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch roles');
         return response.json();

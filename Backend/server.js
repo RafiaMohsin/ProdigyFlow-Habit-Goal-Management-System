@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const habitRoutes = require('./routes/habitRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // --- Habit Tracking Layer ---
 const habitLogRoutes = require('./routes/habitLogRoutes');
@@ -25,22 +26,27 @@ const goalHabitRoutes = require('./routes/goalHabitRoutes');
 app.use(cors()); // Enable CORS
 app.use(express.json());
 
+const authMiddleware = require('./middleware/authMiddleware');
+
 // 3. Mount Routes 
 
-// System & Habit Management
-app.use('/api/users', userRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/habits', habitRoutes);
-app.use('/api/roles', roleRoutes);
+// Public Routes
+app.use('/api/auth', authRoutes);
+
+// Protected Routes
+app.use('/api/users', authMiddleware, userRoutes);
+app.use('/api/categories', authMiddleware, categoryRoutes);
+app.use('/api/habits', authMiddleware, habitRoutes);
+app.use('/api/roles', authMiddleware, roleRoutes);
 
 // Habit Tracking Layer
-app.use('/api/logs', habitLogRoutes); 
-app.use('/api/streaks', streakRoutes);
-app.use('/api/notes', habitNoteRoutes);
+app.use('/api/logs', authMiddleware, habitLogRoutes); 
+app.use('/api/streaks', authMiddleware, streakRoutes);
+app.use('/api/notes', authMiddleware, habitNoteRoutes);
 
 // Goal Management Layer
-app.use('/api/goals', goalRoutes);
-app.use('/api/goal-habits', goalHabitRoutes);
+app.use('/api/goals', authMiddleware, goalRoutes);
+app.use('/api/goal-habits', authMiddleware, goalHabitRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {
@@ -55,15 +61,15 @@ app.use((err, req, res, next) => {
 
 
 //analytics layer
-app.use('/performance', require('./routes/performanceRoutes'));
+app.use('/api/performance', authMiddleware, require('./routes/performanceRoutes'));
 
 //remainder and notification layer
-app.use('/notifications', require('./routes/notificationRoutes'));
-app.use('/reminders', require('./routes/reminderRoutes'));
+app.use('/api/notifications', authMiddleware, require('./routes/notificationRoutes'));
+app.use('/api/reminders', authMiddleware, require('./routes/reminderRoutes'));
 
 //achievement layer
-app.use('/achievements', require('./routes/achievementRoutes'));
-app.use('/user-achievements', require('./routes/userAchievementRoutes'));
+app.use('/api/achievements', authMiddleware, require('./routes/achievementRoutes'));
+app.use('/api/user-achievements', authMiddleware, require('./routes/userAchievementRoutes'));
 
 
 // Start Server
