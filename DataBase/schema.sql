@@ -521,6 +521,19 @@ BEGIN
 END;
 GO
 
+	-- Trigger to prevent creating or updating a Goal with a TargetDate in the past
+CREATE TRIGGER trg_PreventPastGoalDate
+ON Goals
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM inserted WHERE TargetDate < GETDATE())
+    BEGIN
+        RAISERROR('Target date and time cannot be in the past.', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
 
   -- Eman Faisal 24L-2514
 
