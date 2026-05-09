@@ -1,9 +1,13 @@
 const HabitLog = require('../models/HabitLog');
+const StreakHistory = require('../models/StreakHistory');
 
 module.exports = {
     logActivity: async (req, res) => {
         try {
             await HabitLog.create(req.body);
+            if (req.body.habitId) {
+                await StreakHistory.recalculateStreak(req.body.habitId);
+            }
             res.status(201).json({ message: "Habit activity logged successfully" });
         } catch (err) { res.status(500).json({ error: err.message }); }
     },
@@ -18,14 +22,20 @@ module.exports = {
     updateLog: async (req, res) => {
         try {
             const { logId, status } = req.body;
-            await HabitLog.updateStatus(logId, status);
+            const habitId = await HabitLog.updateStatus(logId, status);
+            if (habitId) {
+                await StreakHistory.recalculateStreak(habitId);
+            }
             res.json({ message: "Log status corrected" });
         } catch (err) { res.status(500).json({ error: err.message }); }
     },
 
     deleteLog: async (req, res) => {
         try {
-            await HabitLog.delete(req.params.logId);
+            const habitId = await HabitLog.delete(req.params.logId);
+            if (habitId) {
+                await StreakHistory.recalculateStreak(habitId);
+            }
             res.json({ message: "Log entry removed" });
         } catch (err) { res.status(500).json({ error: err.message }); }
     },
