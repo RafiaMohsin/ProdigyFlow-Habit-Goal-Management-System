@@ -5,6 +5,10 @@ module.exports = {
     createGoal: async (req, res) => {
         try {
             // goalData expected: { userId, goalName, targetDate, progress }
+            const { targetDate } = req.body;
+            if (targetDate && new Date(targetDate) < new Date()) {
+                return res.status(400).json({ error: "Target date and time cannot be in the past" });
+            }
             await Goal.create(req.body);
             res.status(201).json({ message: "Goal created successfully" });
         } catch (err) { 
