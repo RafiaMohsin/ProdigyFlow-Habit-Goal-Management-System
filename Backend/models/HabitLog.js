@@ -28,10 +28,11 @@ class HabitLog {
     static async updateStatus(logId, newStatus) {
         try {
             let pool = await sql.connect(config);
-            return await pool.request()
+            let result = await pool.request()
                 .input('LogID', sql.Int, logId)
                 .input('Status', sql.VarChar, newStatus)
-                .query('UPDATE HabitLogs SET Status = @Status WHERE LogID = @LogID');
+                .query('UPDATE HabitLogs SET Status = @Status OUTPUT inserted.HabitID WHERE LogID = @LogID');
+            return result.recordset[0]?.HabitID;
         } catch (err) { throw err; }
     }
 
@@ -39,9 +40,10 @@ class HabitLog {
     static async delete(logId) {
         try {
             let pool = await sql.connect(config);
-            return await pool.request()
+            let result = await pool.request()
                 .input('LogID', sql.Int, logId)
-                .query('DELETE FROM HabitLogs WHERE LogID = @LogID');
+                .query('DELETE FROM HabitLogs OUTPUT deleted.HabitID WHERE LogID = @LogID');
+            return result.recordset[0]?.HabitID;
         } catch (err) { throw err; }
     }
 
