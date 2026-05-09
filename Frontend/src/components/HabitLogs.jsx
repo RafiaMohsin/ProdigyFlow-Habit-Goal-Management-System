@@ -55,6 +55,7 @@ function HabitLogs() {
       });
       if (response.ok) {
         fetchLogs();
+        fetchFailures();
       } else {
         console.error('Failed to log activity');
       }
@@ -72,6 +73,7 @@ function HabitLogs() {
       });
       if (response.ok) {
         fetchLogs();
+        fetchFailures();
       }
     } catch (error) {
       console.error('Error updating log:', error);
@@ -83,6 +85,7 @@ function HabitLogs() {
       const response = await fetch(`${API_BASE_URL}/logs/${logId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
       if (response.ok) {
         fetchLogs();
+        fetchFailures();
       }
     } catch (error) {
       console.error('Error deleting log:', error);
@@ -95,6 +98,7 @@ function HabitLogs() {
       if (response.ok) {
         alert('Old pending logs cleaned up');
         fetchLogs();
+        fetchFailures();
       }
     } catch (error) {
       console.error('Error cleaning up logs:', error);
