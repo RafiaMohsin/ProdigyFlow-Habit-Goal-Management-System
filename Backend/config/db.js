@@ -10,7 +10,8 @@ const config = {
     options: {
         instanceName: process.env.DB_INSTANCE,
         trustServerCertificate: true, // For local development
-        encrypt: true
+        encrypt: true,
+        useUTC: false
     }
 };
 
