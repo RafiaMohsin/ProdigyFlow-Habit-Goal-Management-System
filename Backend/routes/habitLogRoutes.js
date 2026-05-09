@@ -7,6 +7,6 @@ router.get('/:habitId', logCtrl.getLogsByHabit);     // Read
 router.patch('/correction', logCtrl.updateLog);      // Update
 router.delete('/:logId', logCtrl.deleteLog);         // Delete
 router.delete('/maintenance/cleanup', logCtrl.cleanupLogs); // Bulk Delete
-router.get('/report/failures', logCtrl.getFailures); // Analytics
+router.get('/report/failures/:habitId', logCtrl.getFailures); // Analytics
 
 module.exports = router;

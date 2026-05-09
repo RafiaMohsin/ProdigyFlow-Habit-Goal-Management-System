@@ -7,9 +7,8 @@ class HabitNote {
             let pool = await sql.connect(config);
             return await pool.request()
                 .input('HabitID', sql.Int, noteData.habitId)
-                .input('UserID', sql.Int, noteData.userId)
                 .input('NoteText', sql.Text, noteData.noteText)
-                .query('INSERT INTO HabitNotes (HabitID, UserID, NoteText) VALUES (@HabitID, @UserID, @NoteText)');
+                .query('INSERT INTO HabitNotes (HabitID, NoteText) VALUES (@HabitID, @NoteText)');
         } catch (err) { throw err; }
     }
 
@@ -31,9 +30,11 @@ class HabitNote {
             .input('UserID', sql.Int, userId) // Security: Ensure only the owner can edit
             .input('NoteText', sql.Text, newText)
             .query(`
-                UPDATE HabitNotes 
-                SET NoteText = @NoteText 
-                WHERE NoteID = @NoteID AND UserID = @UserID
+                UPDATE HN 
+                SET HN.NoteText = @NoteText 
+                FROM HabitNotes HN
+                JOIN Habits H ON HN.HabitID = H.HabitID
+                WHERE HN.NoteID = @NoteID AND H.UserID = @UserID
             `);
     } catch (err) { throw err; }
 }
@@ -44,7 +45,12 @@ static async delete(noteId, userId) {
             return await pool.request()
                 .input('NoteID', sql.Int, noteId)
                 .input('UserID', sql.Int, userId)
-                .query('DELETE FROM HabitNotes WHERE NoteID = @NoteID AND UserID = @UserID');
+                .query(`
+                    DELETE HN
+                    FROM HabitNotes HN
+                    JOIN Habits H ON HN.HabitID = H.HabitID
+                    WHERE HN.NoteID = @NoteID AND H.UserID = @UserID
+                `);
         } catch (err) { throw err; }
     }
 

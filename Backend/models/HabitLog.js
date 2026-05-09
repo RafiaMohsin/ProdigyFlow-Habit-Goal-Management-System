@@ -55,14 +55,16 @@ class HabitLog {
     }
 
     // Original: Last 7 days failure report
-    static async getRecentFailures() {
+    static async getRecentFailures(habitId) {
         try {
             let pool = await sql.connect(config);
-            let result = await pool.request().query(`
+            let result = await pool.request()
+                .input('HabitID', sql.Int, habitId)
+                .query(`
                 SELECT DISTINCT H.HabitName, H.Difficulty, L.CompletionDate
                 FROM Habits H
                 JOIN HabitLogs L ON H.HabitID = L.HabitID
-                WHERE L.Status = 'Failed' AND L.CompletionDate > (GETDATE() - 7)
+                WHERE L.HabitID = @HabitID AND L.Status = 'Failed' AND L.CompletionDate > (GETDATE() - 7)
             `); 
             return result.recordset;
         } catch (err) { throw err; }

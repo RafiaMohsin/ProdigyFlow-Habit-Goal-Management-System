@@ -188,7 +188,7 @@ function App() {
                     className={currentPage === 'goal-habits' ? 'active' : ''} 
                     onClick={() => navigateTo('goal-habits')}
                   >
-                    Goal Habits
+                    Link Habits to Goals
                   </button>
                   <button 
                     className={currentPage === 'logs' ? 'active' : ''} 

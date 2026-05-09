@@ -232,10 +232,10 @@ GO
 CREATE TABLE HabitNotes (
     NoteID INT IDENTITY(1,1) PRIMARY KEY,
     HabitID INT NOT NULL,
-    -- UserID INT NOT NULL, we are removing this to avoid Transitive dependency.
+    UserID INT NOT NULL,
     NoteText TEXT NOT NULL,
     CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
-    -- FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    CONSTRAINT FK_HabitNotes_Users FOREIGN KEY (UserID) REFERENCES Users(UserID),
     FOREIGN KEY (HabitID) REFERENCES Habits(HabitID)
 );
 GO
@@ -260,6 +260,19 @@ CREATE TABLE GoalHabit (
     FOREIGN KEY (HabitID) REFERENCES Habits(HabitID)
 );
 GO
+
+-----Added for Normalized Schema
+ALTER TABLE StreakHistory
+ADD CONSTRAINT UQ_StreakHistory_HabitID UNIQUE(HabitID);
+
+-- Drop UserID to avoid Transitive dependency
+ALTER TABLE HabitNotes
+DROP CONSTRAINT FK_HabitNotes_Users;
+
+ALTER TABLE HabitNotes
+DROP COLUMN UserID;
+------...................
+
 INSERT INTO HabitLogs (HabitID, CompletionDate, Status)
 VALUES
 (1, '2026-03-01 08:00:00', 'Completed'),
@@ -274,10 +287,10 @@ VALUES
 (2, 3, 3),  
 (3, 10, 15);
 
-INSERT INTO HabitNotes (HabitID, UserID, NoteText)
+INSERT INTO HabitNotes (HabitID, NoteText)
 VALUES
-(2, 1, 'Finished the module on Linear Regression today!'),
-(6, 2, 'Struggled with JOINs, but feeling better after practice.');
+(2, 'Finished the module on Linear Regression today!'),
+(6, 'Struggled with JOINs, but feeling better after practice.');
 
 INSERT INTO Goals (UserID, GoalName, TargetDate, Progress)
 VALUES
@@ -316,7 +329,9 @@ SET CategoryName = 'Mindfulness & Spiritual'
 WHERE CategoryName = 'Spiritual';
 
 DELETE FROM HabitNotes
-WHERE UserID = (SELECT UserID FROM Users WHERE Username = 'ali');
+WHERE HabitID IN (
+    SELECT HabitID FROM Habits WHERE UserID = (SELECT UserID FROM Users WHERE Username = 'ali')
+);
 
 DELETE FROM Goals 
 WHERE GoalName = 'Master Backend Development' AND UserID = 2;
@@ -422,7 +437,11 @@ WHERE S.LongestStreak = (
 SELECT Username 
 FROM Users 
 WHERE UserID IN (
-    SELECT UserID FROM HabitNotes GROUP BY UserID HAVING COUNT(NoteID) > 3
+    SELECT H.UserID 
+    FROM HabitNotes HN
+    JOIN Habits H ON HN.HabitID = H.HabitID
+    GROUP BY H.UserID 
+    HAVING COUNT(HN.NoteID) > 3
 )
 AND UserID IN (
     SELECT UserID FROM Goals WHERE Progress = 0

@@ -39,7 +39,7 @@ module.exports = {
 
     getFailures: async (req, res) => {
         try {
-            const failures = await HabitLog.getRecentFailures();
+            const failures = await HabitLog.getRecentFailures(req.params.habitId);
             res.json(failures);
         } catch (err) { res.status(500).json({ error: err.message }); }
     }

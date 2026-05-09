@@ -28,11 +28,13 @@ class StreakHistory {
         let result = await pool.request()
             .input('Days', sql.Int, days)
             .query(`
-                SELECT H.UserID, S.HabitID, S.CurrentStreak 
+                SELECT U.Username, H.HabitName, S.CurrentStreak 
                 FROM StreakHistory S
                 JOIN Habits H ON S.HabitID = H.HabitID
+                JOIN Users U ON H.UserID = U.UserID
                 WHERE S.CurrentStreak >= @Days
-            `); // Joined with Habits to access UserID
+                ORDER BY S.CurrentStreak DESC
+            `);
         return result.recordset;
     } catch (err) { throw err; }
 }
@@ -46,7 +48,7 @@ class StreakHistory {
                 FROM Users U
                 JOIN Habits H ON U.UserID = H.UserID
                 JOIN StreakHistory S ON H.HabitID = S.HabitID
-                WHERE S.LongestStreak = (SELECT MAX(LongestStreak) FROM StreakHistory)
+                ORDER BY S.LongestStreak DESC
             `); 
             return result.recordset;
         } catch (err) { throw err; }
