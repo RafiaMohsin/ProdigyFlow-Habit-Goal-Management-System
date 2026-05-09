@@ -64,6 +64,8 @@ function Goals() {
         setTargetDate('');
         fetchGoals();
       } else {
+        const errData = await response.json();
+        alert(errData.error || 'Failed to create goal');
         console.error('Failed to create goal');
       }
     } catch (error) {
