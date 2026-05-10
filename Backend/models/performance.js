@@ -11,9 +11,9 @@ class PerformanceReport {
                 .input('CompletionRate', sql.Decimal(5, 2), data.completionRate)
                 .input('ConsistencyScore', sql.Decimal(5, 2), data.consistencyScore)
                 .query(`
-                        DECLARE @NextID INT = ISNULL((SELECT MAX(ReportID) FROM PerformanceReport), 0) + 1;
-                        INSERT INTO PerformanceReport (ReportID, UserID, ReportType, CompletionRate, ConsistencyScore) 
-                        VALUES (@NextID, @UserID, @ReportType, @CompletionRate, @ConsistencyScore)
+                        DECLARE @ReportTypeID INT = (SELECT ReportTypeID FROM ReportTypes WHERE TypeName = @ReportType);
+                        INSERT INTO PerformanceReport (UserID, ReportTypeID, CompletionRate, ConsistencyScore) 
+                        VALUES (@UserID, @ReportTypeID, @CompletionRate, @ConsistencyScore)
                     `);
         } catch (err) { throw err; }
     }
@@ -23,7 +23,10 @@ class PerformanceReport {
             let pool = await sql.connect(config);
             let result = await pool.request()
                 .input('UserID', sql.Int, userId)
-                .query('SELECT * FROM PerformanceReport WHERE UserID = @UserID ORDER BY GeneratedDate DESC');
+                .query(`SELECT PR.*, RT.TypeName AS ReportType 
+                        FROM PerformanceReport PR
+                        JOIN ReportTypes RT ON PR.ReportTypeID = RT.ReportTypeID
+                        WHERE PR.UserID = @UserID ORDER BY PR.GeneratedDate DESC`);
             return result.recordset;
         } catch (err) { throw err; }
     }
