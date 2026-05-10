@@ -749,7 +749,7 @@ CREATE TABLE ReminderFrequencies (
 
 INSERT INTO ReportTypes (TypeName) VALUES ('Weekly'), ('Monthly');
 INSERT INTO NotificationStatuses (StatusName) VALUES ('Read'), ('Unread'), ('Archived');
-INSERT INTO ReminderFrequencies (FrequencyName) VALUES ('Daily'), ('Mon-Fri'), ('Weekly');
+INSERT INTO ReminderFrequencies (FrequencyName) VALUES ('Daily'), ('Mon-Fri'), ('Weekly'), ('Monthly');
 
 ALTER TABLE PerformanceReport ADD ReportTypeID INT;
 ALTER TABLE Notifications ADD StatusID INT;
