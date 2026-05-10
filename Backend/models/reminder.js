@@ -12,9 +12,9 @@ class Reminder {
             .input('Frequency', sql.VarChar(50), data.frequency)
             .input('Status', sql.VarChar(20), 'Active')
             .query(`
-                    DECLARE @NextID INT = ISNULL((SELECT MAX(ReminderID) FROM Reminders), 0) + 1;
-                    INSERT INTO Reminders (ReminderID, HabitID, ReminderTime, Frequency, Status) 
-                    VALUES (@NextID, @HabitID, @ReminderTime, @Frequency, @Status)
+                    DECLARE @FrequencyID INT = (SELECT FrequencyID FROM ReminderFrequencies WHERE FrequencyName = @Frequency);
+                    INSERT INTO Reminders (HabitID, ReminderTime, FrequencyID, Status) 
+                    VALUES (@HabitID, @ReminderTime, @FrequencyID, @Status)
                 `);
     } catch (err) { throw err; }
 }
@@ -24,7 +24,10 @@ class Reminder {
             let pool = await sql.connect(config);
             let result = await pool.request()
                 .input('HabitID', sql.Int, habitId)
-                .query('SELECT * FROM Reminders WHERE HabitID = @HabitID');
+                .query(`SELECT R.*, RF.FrequencyName AS Frequency 
+                        FROM Reminders R
+                        JOIN ReminderFrequencies RF ON R.FrequencyID = RF.FrequencyID
+                        WHERE R.HabitID = @HabitID`);
             return result.recordset;
         } catch (err) { throw err; }
     }
