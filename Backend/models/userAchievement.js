@@ -10,9 +10,8 @@ class UserAchievement {
                 .input('AchievementID', sql.Int, data.achievementId)
                 .input('EarnedDate', sql.DateTime, new Date())
                 .query(`
-                    DECLARE @NextID INT = ISNULL((SELECT MAX(UserAchievementID) FROM UserAchievements), 0) + 1;
-                    INSERT INTO UserAchievements (UserAchievementID, UserID, AchievementID, EarnedDate)
-                    VALUES (@NextID, @UserID, @AchievementID, @EarnedDate)
+                    INSERT INTO UserAchievements (UserID, AchievementID, EarnedDate)
+                    VALUES (@UserID, @AchievementID, @EarnedDate)
                 `);
         } catch (err) { throw err; }
     }
