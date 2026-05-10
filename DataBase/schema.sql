@@ -580,22 +580,10 @@ CREATE TABLE Reminders(
 ReminderID INT IDENTITY(1,1) PRIMARY KEY,
 HabitID INT NOT NULL,
 ReminderTime TIME NOT NULL, 
+Frequency VARCHAR(50) NOT NULL,
 Status VARCHAR(20) NOT NULL CHECK (Status IN ('Active', 'Inactive'))
-FrequencyID INT NOT NULL,
-FOREIGN KEY (FrequencyID)
-REFERENCES ReminderFrequency(FrequencyID)
 );
 GO
-CREATE TABLE ReminderFrequency (
-    FrequencyID INT IDENTITY(1,1) PRIMARY KEY,
-    FrequencyName VARCHAR(50) NOT NULL UNIQUE
-);
-GO
-INSERT INTO ReminderFrequency (FrequencyName)
-VALUES
-('Daily'),
-('Weekly'),
-('Mon-Fri');
 INSERT INTO PerformanceReport (UserID, ReportType, CompletionRate, ConsistencyScore)
 VALUES
 (1, 'Weekly', 85.50, 7.2),
@@ -742,6 +730,62 @@ WHERE S.CurrentStreak > (
     WHERE HB.CategoryID = H.CategoryID
 );
 
+-- NORMALIZATION TO BCNF USING ALTER COMMANDS
+GO
+CREATE TABLE ReportTypes (
+    ReportTypeID INT IDENTITY(1,1) PRIMARY KEY,
+    TypeName VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE NotificationStatuses (
+    StatusID INT IDENTITY(1,1) PRIMARY KEY,
+    StatusName VARCHAR(20) NOT NULL UNIQUE
+);
+
+CREATE TABLE ReminderFrequencies (
+    FrequencyID INT IDENTITY(1,1) PRIMARY KEY,
+    FrequencyName VARCHAR(50) NOT NULL UNIQUE
+);
+
+INSERT INTO ReportTypes (TypeName) VALUES ('Weekly'), ('Monthly');
+INSERT INTO NotificationStatuses (StatusName) VALUES ('Read'), ('Unread'), ('Archived');
+INSERT INTO ReminderFrequencies (FrequencyName) VALUES ('Daily'), ('Mon-Fri'), ('Weekly');
+
+ALTER TABLE PerformanceReport ADD ReportTypeID INT;
+ALTER TABLE Notifications ADD StatusID INT;
+ALTER TABLE Reminders ADD FrequencyID INT;
+GO
+
+UPDATE PerformanceReport 
+SET ReportTypeID = (SELECT ReportTypeID FROM ReportTypes WHERE TypeName = PerformanceReport.ReportType);
+
+UPDATE Notifications 
+SET StatusID = (SELECT StatusID FROM NotificationStatuses WHERE StatusName = Notifications.Status);
+
+UPDATE Reminders 
+SET FrequencyID = (SELECT FrequencyID FROM ReminderFrequencies WHERE FrequencyName = Reminders.Frequency);
+GO
+
+ALTER TABLE PerformanceReport ALTER COLUMN ReportTypeID INT NOT NULL;
+ALTER TABLE Notifications ALTER COLUMN StatusID INT NOT NULL;
+ALTER TABLE Reminders ALTER COLUMN FrequencyID INT NOT NULL;
+
+ALTER TABLE PerformanceReport ADD CONSTRAINT FK_PerformanceReport_ReportType FOREIGN KEY (ReportTypeID) REFERENCES ReportTypes(ReportTypeID);
+ALTER TABLE Notifications ADD CONSTRAINT FK_Notifications_Status FOREIGN KEY (StatusID) REFERENCES NotificationStatuses(StatusID);
+ALTER TABLE Reminders ADD CONSTRAINT FK_Reminders_Frequency FOREIGN KEY (FrequencyID) REFERENCES ReminderFrequencies(FrequencyID);
+GO
+
+DECLARE @ConstraintName NVARCHAR(200);
+SELECT @ConstraintName = Name FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('Notifications') AND definition LIKE '%Read%';
+IF @ConstraintName IS NOT NULL
+    EXEC('ALTER TABLE Notifications DROP CONSTRAINT ' + @ConstraintName);
+GO
+
+ALTER TABLE PerformanceReport DROP COLUMN ReportType;
+ALTER TABLE Notifications DROP COLUMN Status;
+ALTER TABLE Reminders DROP COLUMN Frequency;
+GO
+
 --1. Stored Procedures (Automation)
 --auto award achievement
 GO
@@ -756,8 +800,8 @@ BEGIN
         VALUES (@UserID, 1, GETDATE());
 
         -- Also create a notification for the user
-        INSERT INTO Notifications (UserID, Message, Status)
-        VALUES (@UserID, 'Congratulations, You earned the Habit Starter badge', 'Unread');
+        INSERT INTO Notifications (UserID, Message, StatusID)
+        VALUES (@UserID, 'Congratulations, You earned the Habit Starter badge', (SELECT StatusID FROM NotificationStatuses WHERE StatusName = 'Unread'));
     END
 END;
 GO
@@ -774,8 +818,8 @@ CREATE PROCEDURE sp_GenerateWeeklyReport
     @Score DECIMAL(5,2)
 AS
 BEGIN
-    INSERT INTO PerformanceReport (UserID, ReportType, CompletionRate, ConsistencyScore)
-    VALUES (@UserID, 'Weekly', @Rate, @Score);
+    INSERT INTO PerformanceReport (UserID, ReportTypeID, CompletionRate, ConsistencyScore)
+    VALUES (@UserID, (SELECT ReportTypeID FROM ReportTypes WHERE TypeName = 'Weekly'), @Rate, @Score);
 END;
 GO
 --testing
@@ -810,11 +854,12 @@ CREATE VIEW vw_DailyReminderSchedule AS
 SELECT 
     H.HabitName,
     R.ReminderTime,
-    R.Frequency,
+    RF.FrequencyName AS Frequency,
     U.Username
 FROM Reminders R
 JOIN Habits H ON R.HabitID = H.HabitID
 JOIN Users U ON H.UserID = U.UserID
+JOIN ReminderFrequencies RF ON R.FrequencyID = RF.FrequencyID
 WHERE R.Status = 'Active';
 GO
 --testing
