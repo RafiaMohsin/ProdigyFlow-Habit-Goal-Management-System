@@ -54,7 +54,7 @@ class User {
     let habitQuery = 'SELECT COUNT(*) as count FROM Habits';
     let goalQuery = 'SELECT COUNT(*) as count FROM Goals WHERE Progress < 100';
     let achievementQuery = 'SELECT COUNT(*) as count FROM UserAchievements';
-    let notificationQuery = 'SELECT COUNT(*) as count FROM Notifications WHERE Status = \'Unread\'';
+    let notificationQuery = 'SELECT COUNT(*) as count FROM Notifications WHERE StatusID = 2';
     let userQuery = 'SELECT COUNT(*) as count FROM Users';
 
     if (roleId !== 1) {
